@@ -1,75 +1,170 @@
-# The Javascript Event Loop: What Every Javascript Developer Needs To Know
+# The Javascript Event Loop
 
 ## The Single Threaded Nature of Javascript
 
 Javascript is single threaded by default. Truth be told it's not quite this simple, but as a starting place for understanding how the event loop actually works, it's a good assumption to start with.
 
-&nbsp;
+Single threaded code is executed one part at a time. Spawning new threads to spread computational costs over multiple CPU-cores is still somewhat non-trivial at this point in the game. I say somewhat because it is absolutely possible, but for right now, this discussion will be limited to V8's core functionality. But wait, aren't JS compilers super fast these days, do we _really_ need to worry about this minutiae?! Well, yes, despite the fact that the V8 engine is an absolute beast, we absolutely still need to consider this stuff. Mainly because it will enable you to write cleaner, more performant, just better code in the long run. It took me a while to accept this fact, but it is absolutely true.
 
-### What Does Single Threaded Mean?
+### Blockage
 
-It means that code is executed one part at a time. By default, the Javascript V8 Engine [V8] does not break code into separate chunks that can be executed in paralel. Because of this it's not possible to spawn new threads to spread your computation costs over multiple CPU-cores for true parallel work. Another important consequence of this is that you could unintentionally block the main thread, which is quite uncool in almost every circumstance. This type of blockage can cause delays and timeouts to happen when it happens server side and can cause all sorts of mayhem, i.e. sluggish/frozen ui responses, frozen animations, etc., when it happens within a client browser.
+This is not the blockage we normally hear people complaining about. Arguably, this kind might actually be worse if that's possible. Writing code that blocks the main thread is super easy to do, and it is quite uncool. Blockage as a phrase in this context refers to what happens when the V8 main thread can not process items on its to-do list (metaphorically speaking) because it is waiting for code in its call stack (not metaphorical at all) to finish executing. Event loop blocking, as it's commonly referred to as, can happen server side or client-side. Either way it can cause all sorts of mayhem including slow http responses, timeouts, frozen animations, unresponsive UI elements, delayed screen renderings, and plenty more.
 
-Consider the code example below, which is NOT WRITTEN asynchronously. You will notice that as the main thread waits for the result to be calculated, the main thread is not able to move on, causing event loop stagnation.
+### Blockage Example
+
+Consider the code example below, which is left intentionally synchronous - meaning that the function calls happen in order, and in a one at a time fashion. You will notice that as the main thread waits for the result to be calculated, the main thread is not able to move on, causing event loop stagnation.
 
 ```js
-/* line 1 */ const result = calculateNthPrime(5000000)
-/* line 2 */ renderTheStuff(result.isPrime || null);
+/* line 1 */ const result1 = calculateNthPrime(5000000);
+/* line 2 */ console.log('the five millionth prime number is: ', result1);
+/* line 3 */ const result2 = calculateNthPrime(20);
+/* line 4 */ console.log('the twentieth prime number is: ', result2);
+/* line 5 */ const result3 = calculateNthPrime(3);
+/* line 6 */ console.log('the third prime number is: ', result3);
 ```
+
+This chunk of code is not terribly complicated but making it from `line 1` to `line 2` will require some intense CPU resources. As primes get bigger, they get harder and harder to find, because there is more space between them. As a result of the single threaded nature of JS, this code will take a while, and then spit out all the results really quickly.
+
+By understanding how the V8 works, we can pretty quickly come up with some work arounds for this kind of situation, to make sure one tricky method doesn't completely destroy the end user experience. More on that later though. Lets begin this by looking at the mechanisms and structures used by the V8 engine.
 
 &nbsp;
 
-## Javascript Execution
-
-### Call Stack 
-
-As functions are called, they are put on the main thread's call stack. As functions are executed they are popped off the stack. This mechanism is what is used when generating the call stack traces that you might have seen once or twice.
-
-### Event/Message Queue
-
-This is queue can be thought of as a list of messages to be processed. Each message has an associated function which gets called as the message is 'handled' by the V8 Runtime. Messages are 'scheduled' in that the queue maintains their order such that the oldest items are de-queued/processed first. Processing each message involves calling their functions, with the actual messages supplied as input parameters. As each 'message' object from this queue is processed its corresponding function-call causes a new stack-frame for that function's use. The processing of functions then continues until the entire call-stack is empty, at which point the event loop will move on to the next 'message-event-object' within the queue. Ergo, this mechanims where/how functions and events are scheduled for execution.
-
-#### Who is Adding These Messages You Ask?
-
-This depends a little on where the code is being executed. Within a web browser for instance, messages can be added anytime an event occurs and there is an event listener attached.
+## Javascript Structures and Mechanisms
 
 ### Heap
 
-Large, mostly instructured area of memory used by the Javascript Runtime.
+Lets not worry too much aboute this one. For the sake of this discussion, the heap can be thought of as where memory is allocation happens within for the JS Runtime.
+
+### Call Stack
+
+Since javascript is single threaded, the functions executed within the main thread are necessarily executed right from the call stack. As the main execution thread steps 'into' a function, the function is added to the stack. As main execution thread returns from a function, that function is popped off of the stack. 
+
+#### A Call Stack Example
+
+Consider the following code living within hypothetical file: _`main.js`_.
+
+```javascript
+// main.js
+
+function multiply(a, b) {
+  return a * b;
+}
+
+function square(n) {
+  return multiply(n, n);
+}
+
+function printSquare(n) {
+  var squared = square(n);
+  console.log(squared);
+}
+
+printSquare(4);
+```
+
+1. As the main execution thread steps into the _`main.js`_ file. The first thing that happens is that _`main`_ is added to the call stack.
+
+    | Call Stack |
+    |:-----------|
+    | `main()`   | 
+
+2. As soon as printSquare is called, the pretty much immediately needs to step into the function _`printSquare`_, causing that function context to also be pushed onto the stack. Since the thread has not technically returned from _`main`_, that function context is left on the stack, just below _`printSquare`_.
+
+    | Call Stack |
+    |:-----------|
+    | `printSquare(4)` |  
+    | `main()` |
+
+3. As the various methods within _`main.js`_ are 'stepped into', the call stack quickly looks something like the following:
+
+    | Call Stack           |
+    |:---------------------|
+    | `multiply(n, n)`     |  
+    | `square(n)`          |  
+    | `printSquare(4)`     |
+    | `main()`             |
+
+
+4. As functions are called, if they return other functions, the 'other' functions are popped off the stack. For example, as soon as the _`multiply`_ function completes, and the thread returns from that context back to the _`square`_ function, the stack pops off the _`multiply`_ context from the stack, causing it to look something like this:
+
+    | Call Stack           |
+    |:---------------------|
+    | `square(n)`          |
+    | `printSquare(4)`     |
+    | `main()`             |
+
+5. As the thread of execution returns to _`printSquare`_, a _`console.log`_ method needs to be added to the stack.
+
+    | Call Stack              |
+    |:------------------------|
+    | `console.log(squared)`  |
+    | `printSquare(4)`        |
+    | `main()`                |
+
+6. As execution of _`printSquare`_ continues, although there is no 'return', the return is implicit. The lack of more lines of code to execute causes the implicit return. Same is true for the _`main()`_ function-file-context. As the rest of the file is executed the call stack goes through the following evolutions before the event loop is free to check the task and render queues.
+
+    | Call Stack              |
+    |-------------------------|
+    | `printSquare(4)`        |
+    | `main()`                |
+    &nbsp; 
+
+    | Call Stack              |
+    |:------------------------|
+    | `main()`                |
+    &nbsp; 
+
+    | Call Stack |
+    |:-----------|
+    | _(empty)_  |
+    &nbsp; 
+
+Analyzing the callstack carefully lets us know exactly where we are in the program. Ergo, this mechanism is what is used when generating the call stack traces that you might have seen once or twice. Technically, the things passed onto the stack are execution contexts. Sometimes these contexts are referred to as execution frames.
+
+The call stack is related to why people mistakenly think that the js runtime only uses one thread. We will learn why this isn't exactly the truth later on, but for now, think of it this way:
+
+```
+one thread == one call stack == one thing happens at once
+
+source: https://www.youtube.com/watch?v=8aGhZQkoFbQ#action=share
+```
 
 ### Web APIs 
 
-These are functions provided by the browser iself - not the V8 engine. Web APIs perform actions and even provide for the DOM structure itself. Web APIs have the ability to spawn their own tasks that can execute outside of the main thread's execution loop. These APIs are the reason the V8 doesn't need to worry about handling the DOM and can therefore be run with no web browser what-so-ever.
+These are simply functions and execution constexts provided by the browser iself - not the V8 engine. Another way to think of these would be as code that doesn't live inside the V8 engine or within the application currently being executed. Web APIs perform actions and even provide for the DOM structure itself. Web APIs have the ability to spawn their own tasks that can execute outside of the main thread's execution loop. These APIs are the reason the V8 doesn't need to worry about handling the DOM and can therefore be run with no web browser what-so-ever. Some commononly used Web API examples are listed below.
 
-
-**Example:**
-
-1. When setTimout() is called, the browser spawns a seperate thread to wait for the specified milliseconds and then it adds the callback function to the Event Queue.
-
-2. When the call-stack, i.e. stack or function stack, is empty the event loop grabs functions and events to evaluate within the Event Queue and pushes them onto the call-stack.
-
-3. Once all the queued events from the event que are added on the call stack the functions within the call stack are executed in the order with which they were pushed onto the stack.
-
-#### Common Web APIs
-
-- DOM
-- Ajax
+- DOM (document object model and related functions/properties)
+- AJAX / XMLHttpRequest
 - setTimeout()
 - setInterval()
 
+Although these Web API methods aren't technically _part_ of the event loop, they do interact with it, albeit somewhat indirectly. In order to understand this, we need to explore a few other structures hanging around in our JS runtime.
+
+### The Callback/Task Queue
+
+This is where/how functions and events are scheduled for execution. Items can be pushed onto the callstack through functions being executed and/or WebAPIs, and/or other mechanisms. 
+
+The setTimeout method provides for a decent example here. When a setTimeout function's timer mechanism completes, the webAPI queues the callback function onto the task queue. Unlike the call stack, it's important to remember this really is a queue and not a stack. If other callbacks were already there, they will get be pushed onto the call stack first. This means that setting the timeout to `0` doesn't actually give the callback any preferential treatment within the task queue. It does cause the callback to be queued without having to wait for a timer to go off. As far as the callstack is concerned though, as soon as the 'timer' begins, the main thread has already popped the `setTimeout` off the stack.
+
+Importantly, the event loop is not going to check the task queue until all the current elements within the call stack have been popped. That's right, the call stack needs to be entirely emptied before the event loop will check for more tasks within the callback/task queue.
+
+### Render Queue
+
+Browsers want to re-paint the screen extremely quickly, as this makes for the best possible user experience. But somewhat problematically, the browser's ability to render and re-render the screen can be directly blocked by the call stack not being 'finished' or 'emptied' yet.
+
+Somewhat strangely, the render queue is somewhat separate from the callback queue, and is also prioritized over the callback queue.
+
+Every 16 milliseconds, a 'render' action is added to the render queue, and the event loop will always prioritize these tasks over tasks within the callback queue.
+
+While the render queue waits for the call stack to complete, the screen will appear 'stuck' for the user. Buttons don't click, videos don't play, animations don't animate, etc. 
+
 ### The Actual Event Loop
 
-The actual event loop is simply the mechamism that pulls stuff out of the event queue and pushes it onto the execution stack when it becomes empty. The Event Loop ensures that the call stack is 'fed'.
+The actual event loop is simply the mechamism that pulls items ('messages') out of the event and render queues and pushes and onto the callstack. The event loop waits for the call stack to complete it's executing and popping/pushing functions. As soon as this process is complete, the event loop grabs tasks/events from task/event queues and pushes these items onto the call stack.
 
-The event loop waits for messages and when their is one to process, it does so. See the code snippet below for MDN's succinct explanation of how the event loops functions.
+This is what the event loop part of the JS Runtime actually is. It's the thing that grabs execution contexts from queues and pushes them onto the call stack. This is why when one engineer says 'looks like the main thread is blocked' and another engineer says 'looks like the event loop is totally blocked', they can both be totally right. Or totally wrong. You get the idea though. 
 
-```javascript
-while (queue.waitForMessage()) {
-  queue.processNextMessage();
-}
-```
-
-## Single Thread Work Arounds
+## Work Arounds
 
 ### 1) Web Workers
 
@@ -79,40 +174,33 @@ It is technically possible to run two V8 engines within the same allocated proce
 
 ### 3) Just Divide and Conquer
 
-As mentioned above, the event loop handles each message within the queue with a 'run-to-completion' strategy. Unlike other runtimes (think C++), chunks of code will never be temporarily paused to free up resources for some other highly-prioritized unit of work. Because of how this mechanism works, keeping each 'message' as bite-sized as possible will prevent freezing/stagnation issues in the runtime.
-
 ### The Main Thread Visualized
 
 ![image](resources/javascriptMainThread.jpeg)
 
-[CallStack vs. EventQue](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#Visual_representation)
-
-![image](https://developer.mozilla.org/files/4617/default.svg 'some title')
-
-
 &nbsp;
 
-## Glossary of Fancy Words
+### Asynchronous Callbacks
+
+### Concurrency & The Event Loop
+
+One thing at a time. Except when more happens. WebAPIs are kind of like separate threads.
+
+## Blocking
+
+Sometimes things on the call stack are slow. Blocking is whats happening. 
+
+## Glossary of Fancy Words for Newbs and Lazies
 
 | Phrase | Definition |
 | -------|------------|
-| V8 Engine | An open source Javascript engine which is used by Chrome, and is also used to execute JS code in Node environments. Built by Google, it is open source and written in C++. |
+| V8 Engine |  An open source Javascript engine which is used by Chrome, and is also used to execute JS code in Node environments. Built by Google, it is open source and written in C++. |
 | Runtime | Sometimes referred to as the 'main thread' - this is the parent process utilized used by the V8 engine.|
-| zebra stripes | are neat |
+| synchronous code | happens sequentially, one thing at a time |
 
-&nbsp;
-
-## Videos
-
-### What The Heck Is The Event Loop Anyway?
-
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/8aGhZQkoFbQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-&nbsp;
 
 ## Resources
 - [Javascript event loop youtube video](https://www.youtube.com/watch?v=XzXIMZMN9k4)
 - [Web Workers API Docs on Mozilla](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
 - [Javascript V8 Engine Hackernoon Article](https://hackernoon.com/javascript-v8-engine-explained-3f940148d4ef)
 - [Mozilla's docs on Web APIs](https://developer.mozilla.org/en-US/docs/Web/API)
-- [What The Heck Is The Event Loop Anyway?](https://2014.jsconf.eu/speakers/philip-roberts-what-the-heck-is-the-event-loop-anyway.html)
