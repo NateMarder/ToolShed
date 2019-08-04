@@ -1,0 +1,22 @@
+{
+  "name": "toolshed",
+  "version": "1.0.0",
+  "description": "A place for me to keep helpful code stuff and things.",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NateMarder/ToolShed.git"
+  },
+  "author": "Nate Marder",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NateMarder/ToolShed/issues"
+  },
+  "homepage": "https://github.com/NateMarder/ToolShed#readme",
+  "dependencies": {
+    "eslint": "^6.1.0"
+  }
+}

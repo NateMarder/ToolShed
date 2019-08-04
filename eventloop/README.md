@@ -1,14 +1,39 @@
 # The Javascript Event Loop
 
+## Table Of Contents
+1. [The Single Threaded Nature of Javascript](#The-Single-Threaded-Nature-of-Javascript)
+2. [What's an Event Loop Anyways](#whats-an-event-loop-anyways)
+2. [Blocking The Event Loop](#blocking-the-event-loop)
+    1. [Gotchas In The Node Event Loop](#Gotchas-In-The-Node-Event-Loop)
+
 ## The Single Threaded Nature of Javascript
 
 Javascript is single threaded by default. Truth be told it's not quite this simple, but as a starting place for understanding how the event loop actually works, it's a good assumption to start with.
 
-Single threaded code is executed one part at a time. Spawning new threads to spread computational costs over multiple CPU-cores is still somewhat non-trivial at this point in the game. I say somewhat because it is absolutely possible, but for right now, this discussion will be limited to V8's core functionality. But wait, aren't JS compilers super fast these days, do we _really_ need to worry about this minutiae?! Well, yes, despite the fact that the V8 engine is an absolute beast, we absolutely still need to consider this stuff. Mainly because it will enable you to write cleaner, more performant, just better code in the long run. It took me a while to accept this fact, but it is absolutely true.
+Single threaded code is executed one part at a time. Spawning new threads to spread computational costs over multiple CPU-cores is still somewhat non-trivial at this point in the game. I say somewhat because it is absolutely possible, but for right now, this discussion will be limited to V8's core functionality.
 
-### Blockage
+The rationale is actually pretty straightforward - perforance and security. If you would like to write javascript that performs sluggishly and is vulnerable to attacks, then please stop reading this now and just pretend like you never heard of an event loop. But your code isn't sluggish your say? Well sure, but that will be true until it isn't. Just because you haven't fallen off a bicyle doesn't mean you shouldn't wear a helmet.
 
-This is not the blockage we normally hear people complaining about. Arguably, this kind might actually be worse if that's possible. Writing code that blocks the main thread is super easy to do, and it is quite uncool. Blockage as a phrase in this context refers to what happens when the V8 main thread can not process items on its to-do list (metaphorically speaking) because it is waiting for code in its call stack (not metaphorical at all) to finish executing. Event loop blocking, as it's commonly referred to as, can happen server side or client-side. Either way it can cause all sorts of mayhem including slow http responses, timeouts, frozen animations, unresponsive UI elements, delayed screen renderings, and plenty more.
+## Whats An Event Loop Anyways
+
+## Blocking The Event Loop
+
+When the Event Loop can is taking too long to execute some callback, the entire main thread will sit there uselessly, like an unwanted house guest. It will not be able to continue it's job of queueing more callbacks for execution.
+
+So where do these callbacks come from you ask? Great question. If we are talking about a Node/server-side situation, these callbacks are being initiated by client requests and the code associated with the application endpoints. This code is primarily executed within the 'main thread', with exceptions being
+
+Writing code that blocks the is actually super easy to do. Blockage as a phrase in this context refers to what happens when the V8 main thread can not process items on its to-do list (metaphorically speaking) because it is waiting for code in its call stack (not metaphorical at all) to finish executing. Event loop blocking, as it's commonly referred to as, can happen server side or client-side. Either way it can cause all sorts of mayhem including slow http responses, timeouts, frozen animations, unresponsive UI elements, delayed screen renderings, and plenty more.
+
+## Event Loops in Node vs. Browsers
+
+### Gotchas In The Node Event Loop
+
+Node uses the fastest, best Javascript Engine of all time, the Google V8 engine. It's damn fast, with a few small exceptions:
+
+1. JSON Operations
+2. Regular Expressions
+
+Depending on the size and complexity of the the function calls containing the 'dangerous' operation types listed above, your event loop could definitely be slower than expected. Keeping your JSON operations and regular expressions as succinct as possible can have a definite impact on your Event Loop's speed and efficiency. 
 
 ### Blockage Example
 
@@ -29,7 +54,7 @@ By understanding how the V8 works, we can pretty quickly come up with some work 
 
 &nbsp;
 
-## Javascript Structures and Mechanisms
+## JS Runtime Structures, Mechanisms, and Concepts
 
 ### Heap
 
@@ -83,7 +108,6 @@ printSquare(4);
     | `square(n)`          |  
     | `printSquare(4)`     |
     | `main()`             |
-
 
 4. As functions are called, if they return other functions, the 'other' functions are popped off the stack. For example, as soon as the _`multiply`_ function completes, and the thread returns from that context back to the _`square`_ function, the stack pops off the _`multiply`_ context from the stack, causing it to look something like this:
 
@@ -140,7 +164,7 @@ These are simply functions and execution constexts provided by the browser iself
 
 Although these Web API methods aren't technically _part_ of the event loop, they do interact with it, albeit somewhat indirectly. In order to understand this, we need to explore a few other structures hanging around in our JS runtime.
 
-### The Callback/Task Queue
+### The Callback-Task-Render-Message Queue
 
 This is where/how functions and events are scheduled for execution. Items can be pushed onto the callstack through functions being executed and/or WebAPIs, and/or other mechanisms. 
 
@@ -164,6 +188,16 @@ The actual event loop is simply the mechamism that pulls items ('messages') out 
 
 This is what the event loop part of the JS Runtime actually is. It's the thing that grabs execution contexts from queues and pushes them onto the call stack. This is why when one engineer says 'looks like the main thread is blocked' and another engineer says 'looks like the event loop is totally blocked', they can both be totally right. Or totally wrong. You get the idea though. 
 
+### Can Two Runtimes Work Together?
+
+Yes. Two distinct runtimes can communicate through sending messages via the postMessage method. This method adds a message to the other runtime if the latter listens to message events.
+
+## FAQs
+
+- How does one monitor the Event Loop. Are there ways to write tests to ensure your application reflects all of this great knowledge you've just acquired?
+    - [Ummmm... well... sort of](https://medium.com/the-node-js-collection/what-you-should-know-to-really-understand-the-node-js-event-loop-and-its-metrics-c4907b19da4c#8a87)
+    - [If that link didn't use this one and look for the 'monitoring the event loop' section](https://medium.com/the-node-js-collection/what-you-should-know-to-really-understand-the-node-js-event-loop-and-its-metrics-c4907b19da4c)
+
 ## Work Arounds
 
 ### 1) Web Workers
@@ -177,6 +211,7 @@ It is technically possible to run two V8 engines within the same allocated proce
 ### The Main Thread Visualized
 
 ![image](resources/javascriptMainThread.jpeg)
+![image](resources/mainThread1.png)
 
 &nbsp;
 
@@ -204,3 +239,10 @@ Sometimes things on the call stack are slow. Blocking is whats happening.
 - [Web Workers API Docs on Mozilla](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
 - [Javascript V8 Engine Hackernoon Article](https://hackernoon.com/javascript-v8-engine-explained-3f940148d4ef)
 - [Mozilla's docs on Web APIs](https://developer.mozilla.org/en-US/docs/Web/API)
+- [The Node Event Loop Explained](https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#what-is-the-event-loop)
+- [The Node Event Loop From Inside Out](https://www.youtube.com/watch?v=P9csgxBgaZ8)
+- [The Node.js Event Loop: Not So Single Threaded](https://www.youtube.com/watch?v=zphcsoSJMvM)
+- [Philip Roberts' Vimeo Help I'm Stuck In An Event Loop](https://vimeo.com/96425312)
+- [A Complete Guide to the Node.js Event Loop](https://blog.logrocket.com/a-complete-guide-to-the-node-js-event-loop/)
+- [The Node Event Loop](https://medium.com/the-node-js-collection/what-you-should-know-to-really-understand-the-node-js-event-loop-and-its-metrics-c4907b19da4c)
+
