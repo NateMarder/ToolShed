@@ -22,3 +22,7 @@ The merge sort algorithm is a stable, efficient, general-purpose, sorting algori
 
 - `Heap-sort` has the same time-bounds but uses `O(1)` auxilary space instead of the merge sort's `O(n)`.
 - If merge sort is used with linked-lists, the use of pointers can decrease memory consumption, bringing the overall memory requirements down to `O(1)`
+
+## Sources
+
+- [Oleksii Trekhleb's javascript-algorithms](https://github.com/trekhleb/javascript-algorithms)
