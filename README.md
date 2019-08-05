@@ -6,6 +6,8 @@
 <img width="460" src="tools.jpg">
 </div>
 
+&nbsp;
+
 ## Algorithm Examples
 
 1. [Merge Sort](algorithms/mergeSort/README.md)
