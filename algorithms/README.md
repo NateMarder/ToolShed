@@ -7,6 +7,7 @@
     2. [Bubble Sort](bubbleSort/README.md)
 2. Searching Algorithms
     1. [Binary Search](#Binary-Search)
+3. [Evaluating The Runtime](runtimeComplexity/README.md)
 3. [Back To Main Tool Shed Directory](../../README.md)
 
 &nbsp;
