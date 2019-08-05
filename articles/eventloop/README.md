@@ -3,8 +3,10 @@
 ## Table Of Contents
 1. [The Single Threaded Nature of Javascript](#The-Single-Threaded-Nature-of-Javascript)
 2. [What's an Event Loop Anyways](#whats-an-event-loop-anyways)
-2. [Blocking The Event Loop](#blocking-the-event-loop)
+3. [Blocking The Event Loop](#blocking-the-event-loop)
     1. [Gotchas In The Node Event Loop](#Gotchas-In-The-Node-Event-Loop)
+4. [Sources](#sources)
+5. [Back To Main Tool Shed Directory](../../README.md)
 
 ## The Single Threaded Nature of Javascript
 
@@ -234,7 +236,9 @@ Sometimes things on the call stack are slow. Blocking is whats happening.
 | synchronous code | happens sequentially, one thing at a time |
 
 
-## Resources
+--- 
+## Sources
+
 - [Javascript event loop youtube video](https://www.youtube.com/watch?v=XzXIMZMN9k4)
 - [Web Workers API Docs on Mozilla](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
 - [Javascript V8 Engine Hackernoon Article](https://hackernoon.com/javascript-v8-engine-explained-3f940148d4ef)
@@ -246,15 +250,3 @@ Sometimes things on the call stack are slow. Blocking is whats happening.
 - [A Complete Guide to the Node.js Event Loop](https://blog.logrocket.com/a-complete-guide-to-the-node-js-event-loop/)
 - [The Node Event Loop](https://medium.com/the-node-js-collection/what-you-should-know-to-really-understand-the-node-js-event-loop-and-its-metrics-c4907b19da4c)
 - [Web Workers Section From You Don't Know JS](https://github.com/getify/You-Dont-Know-JS/blob/master/async%20%26%20performance/ch5.md#web-workers)
-
-
-
-&nbsp;
-
----
-
-<div style="text-align:center;"> 
-    <a style="color:darkgrey" href="../../README.md">
-        <b><i>click here to go back to project root</i></b>
-    </a>
-</div>
