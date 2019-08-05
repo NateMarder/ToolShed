@@ -4,6 +4,7 @@
 
 1. [Images](#Images)
 2. [Procedure](#Procedure)
+3. [Javascript Implemtation](#javascript-implementation)
 3. [Main Algorithm Section Directory](../README.md)
 4. [Back To Main Tool Shed Directory](../../README.md)
 
@@ -33,9 +34,37 @@ function binary_search(A, n, T):
     return unsuccessful
 ```
 
+## Javascript Implementation
+
+```javascript
+const binarySearch = (searchArray, searchItem, searchFrom, searchTo) => {
+
+  // base case - everything is searched and item not found
+  if (searchFrom > searchTo) return false;
+
+  // find mid index
+  const mid = Math.floor((searchFrom + searchTo) / 2);
+
+  // let x represent the searchItem...
+  const xEqualsMidValue = searchItem === searchArray[mid]; // case: 1 -> search val found, return true
+  const xIsLessThanMidVal = searchItem < searchArray[mid]; // case: 2 -> drop the right half and keep going
+  const xIsMoreThanMidVal = searchItem > searchArray[mid]; // case: 3 -> drop the left half and keep going
+
+  // case: 1
+  if (xEqualsMidValue) return true;
+
+  // case: 2
+  if (xIsLessThanMidVal) return binarySearch(searchArray, searchItem, searchFrom, mid - 1);
+
+  // case: 3
+  if (xIsMoreThanMidVal) return binarySearch(searchArray, searchItem, mid + 1, searchTo);
+}
+```
+
 &nbsp;
 
 --- 
 ## Sources
 
 - [Trekhleb on Github](https://github.com/trekhleb/javascript-algorithms)
+- [Geeks for Geeks](https://www.geeksforgeeks.org/binary-search-in-javascript/)

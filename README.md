@@ -11,6 +11,7 @@
 ## Algorithm Examples
 
 1. [Merge Sort](algorithms/mergeSort/README.md)
+2. [Binary Search](algorithms/binarySearch/README.md)
 
 ## Articles
 
