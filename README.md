@@ -3,7 +3,7 @@
 <span>A place for me to keep helpful code examples, snippets, and whatnot. Feel free to fork and forget!</span>
 <br />
 <br />
-<img width="460" src="tools.jpg">
+<img width="66%" src="assets/tools.jpg">
 </div>
 
 &nbsp;
@@ -18,8 +18,8 @@
 
 ## Recipes
 
-1. _(coming soon)_
+1. [Merge Sort](recipes/README.md)
 
 ## Resources
 
-1. _(coming soon)_
+1. [Current Home For Misc Resources](resources/README.md)

@@ -26,3 +26,14 @@ The merge sort algorithm is a stable, efficient, general-purpose, sorting algori
 ## Sources
 
 - [Oleksii Trekhleb's javascript-algorithms](https://github.com/trekhleb/javascript-algorithms)
+
+
+&nbsp;
+
+---
+
+<div style="text-align:center;"> 
+    <a style="color:darkgrey" href="../../README.md">
+        <b><i>click here to go back to project root</i></b>
+    </a>
+</div>

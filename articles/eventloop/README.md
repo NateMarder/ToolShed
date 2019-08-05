@@ -245,4 +245,16 @@ Sometimes things on the call stack are slow. Blocking is whats happening.
 - [Philip Roberts' Vimeo Help I'm Stuck In An Event Loop](https://vimeo.com/96425312)
 - [A Complete Guide to the Node.js Event Loop](https://blog.logrocket.com/a-complete-guide-to-the-node-js-event-loop/)
 - [The Node Event Loop](https://medium.com/the-node-js-collection/what-you-should-know-to-really-understand-the-node-js-event-loop-and-its-metrics-c4907b19da4c)
+- [Web Workers Section From You Don't Know JS](https://github.com/getify/You-Dont-Know-JS/blob/master/async%20%26%20performance/ch5.md#web-workers)
 
+
+
+&nbsp;
+
+---
+
+<div style="text-align:center;"> 
+    <a style="color:darkgrey" href="../../README.md">
+        <b><i>click here to go back to project root</i></b>
+    </a>
+</div>
