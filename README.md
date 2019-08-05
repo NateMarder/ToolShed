@@ -1,6 +1,10 @@
-# ToolShed
-
-A place for me to keep helpful code examples, snippets, and whatnot. Feel free to fork and forget!
+<div align="center">
+<h1>ToolShed</h1>
+<span>A place for me to keep helpful code examples, snippets, and whatnot. Feel free to fork and forget!</span>
+<br />
+<br />
+<img width="460" src="tools.jpg">
+</div>
 
 ## Algorithm Examples
 
