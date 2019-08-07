@@ -10,7 +10,7 @@
 
 ## The Single Threaded Nature of Javascript
 
-Javascript is single threaded by default. Truth be told it's not quite this simple, but as a starting place for understanding how the event loop actually works, it's a good assumption to start with.
+Javascript is single threaded by default. Truth be told it's notq uite this simple, but as a starting place for understanding how the event loop actually works, it's a good assumption to start with.
 
 Single threaded code is executed one part at a time. Spawning new threads to spread computational costs over multiple CPU-cores is still somewhat non-trivial at this point in the game. I say somewhat because it is absolutely possible, but for right now, this discussion will be limited to V8's core functionality.
 
