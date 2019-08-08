@@ -6,10 +6,9 @@ These questions are coming from all over the place. I'm currently prepping for a
 
 ## General Knowledge Questions
 
-
 ### [1] What hapens when **setState** is called?
 
-1. The first thing React will do is merge the object you passed into setState into the current state of the component. 
+1. The first thing React will do is merge the object you passed into setState into the current state of the component.
 2. After the state-merge is complete, the [<i><sup>1</sup></i> reconciliation](#1-reconciliation) process is kicked off.
 
 
@@ -17,7 +16,6 @@ These questions are coming from all over the place. I'm currently prepping for a
 
 - React **_elements_** describe what you want to see on the screen, kind of like a representation of a DOM node.
 - **_Components_** are the building blocks of React. A component is a function or class which optionally accepts input and returns a React element.
-
 
     #### The following 'createElement' call
 
