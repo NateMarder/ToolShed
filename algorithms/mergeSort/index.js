@@ -5,7 +5,7 @@ function merge(leftUnsorted, rightUnsorted) {
 
   // sort all the elements onto the sortedArray - keep finding next minimum
   while (leftIndex < leftUnsorted.length && rightIndex < rightUnsorted.length) {
-    
+
     // Find minimum element of two arrays. and push it onto sorted Array
     if (leftUnsorted[leftIndex] < rightUnsorted[rightIndex]) {
       sortedArray.push(leftUnsorted[leftIndex]);
@@ -34,7 +34,7 @@ function sort(unSortedArray) {
   const rightArray = unSortedArray.slice(mid);
 
   return merge(
-    sort(leftArray), 
+    sort(leftArray),
     sort(rightArray));
 }
 
@@ -46,7 +46,7 @@ const unsorted = [
   1.50005,
   1.50006,
   31,
-  32, 
+  32,
   33,
   -197,
   -198,
